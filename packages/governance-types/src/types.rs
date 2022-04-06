@@ -10,6 +10,7 @@ pub struct InstantiateMsg {}
 pub enum ExecuteMsg {
     Vote { vote: Vote, weight: Uint128 },
     Propose(ProposeMsg),
+    CloseVote {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -35,6 +36,7 @@ pub struct ProposalResponse {
     pub proposer: String,
     pub min_votes: Uint128,
     pub total_votes: Uint128,
+    pub status: Status,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -49,4 +51,11 @@ pub enum Vote {
     Yes,
     No,
     Abstain,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum Status {
+    Open,
+    Closed,
+    Rejected,
 }

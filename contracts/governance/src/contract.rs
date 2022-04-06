@@ -1,4 +1,4 @@
-use crate::execute::{execute_propose, execute_vote};
+use crate::execute::{execute_propose, execute_vote, execute_vote_status};
 use crate::queries::{query_config, query_propose};
 use crate::state::{store_config, store_proposal, Config, Proposal};
 #[cfg(not(feature = "library"))]
@@ -8,7 +8,7 @@ use cosmwasm_std::{
 };
 use governance_types::errors::ContractError;
 use governance_types::types::{
-    ExecuteMsg, InstantiateMsg, MigrateMsg, ProposalResponse, ProposeMsg, QueryMsg, Vote,
+    ExecuteMsg, InstantiateMsg, MigrateMsg, ProposalResponse, ProposeMsg, QueryMsg, Status, Vote,
 };
 
 // Method is executed when a new contract instance is created. You can treat it as a constructor.
@@ -43,6 +43,7 @@ pub fn execute(
         // TODO add required method types and handlers for each.
         ExecuteMsg::Vote { vote, weight } => execute_vote(deps, env, info, vote, weight),
         ExecuteMsg::Propose(ProposeMsg { title }) => execute_propose(deps, env, info, title),
+        ExecuteMsg::CloseVote {} => execute_vote_status(deps, env, info),
     }
 }
 
@@ -132,6 +133,43 @@ mod test {
     }
 
     #[test]
+    fn closing_propsal() {
+        let mut deps = mock_dependencies(&coins(1000, "token"));
+
+        let info = mock_info("creator", &coins(1000, "propT"));
+        let msg = InstantiateMsg {};
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+        let msg = ExecuteMsg::Propose(ProposeMsg {
+            title: "Proposal with OPEN status".to_string(),
+        });
+        //Execute Vote with less than 10 value
+        let info = mock_info("creator", &coins(1000, "propT"));
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
+        let msg = ExecuteMsg::Vote {
+            vote: Vote::Yes,
+            weight: Uint128::from(10u128),
+        };
+        let info = mock_info("creator", &coins(1000, "propT"));
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
+        println!("Show what you can seen after execution vote {:?}", res);
+        //Closing proposal
+        let msg = ExecuteMsg::Vote {
+            vote: Vote::Yes,
+            weight: Uint128::from(9u128),
+        };
+        let info = mock_info("creator", &coins(1000, "propT"));
+        let msg = ExecuteMsg::CloseVote {};
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
+
+        //get proposal
+        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetPropose {}).unwrap();
+        let value: ProposalResponse = from_binary(&res).unwrap();
+        println!("At the end {:?}", value);
+        assert!(matches!(value.status, Status::Rejected));
+    }
+
+    #[test]
     fn not_allow_user_to_vote_more_than_once() {
         let mut deps = mock_dependencies(&coins(1000, "token"));
 
@@ -152,7 +190,6 @@ mod test {
         };
         let info = mock_info("voter_address", &coins(1000, "propT"));
         let res = execute(deps.as_mut(), mock_env(), info, msg);
-        println!("Response after first vote {:?}", res);
 
         //Second voting
         let msg = ExecuteMsg::Vote {

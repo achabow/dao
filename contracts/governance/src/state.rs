@@ -1,7 +1,7 @@
 use cosmwasm_std::Addr;
 use cosmwasm_std::{StdResult, Storage, Uint128};
 use cw_storage_plus::{Item, Map};
-use governance_types::types::Vote;
+use governance_types::types::{Status, Vote};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -21,6 +21,7 @@ pub struct Proposal {
     pub min_votes: Uint128,
     pub votes: Votes,
     pub voter: Voter,
+    pub status: Status,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
@@ -48,6 +49,7 @@ impl Votes {
 pub struct Voter {
     pub address: Addr,
     pub vote_status: bool,
+    pub whitelisted: bool,
 }
 
 const CONFIG: Item<Config> = Item::new("\u{0}\u{6}config");

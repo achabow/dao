@@ -22,12 +22,14 @@ pub fn query_propose(deps: Deps) -> Result<ProposalResponse, ContractError> {
     let proposer = String::from(prop.proposer);
     let min_votes = config.required_votes;
     let total_votes = prop.votes.total();
+    let status = prop.status;
 
     let resp = ProposalResponse {
         title,
         min_votes,
         proposer,
         total_votes,
+        status,
     };
 
     Ok(resp)
