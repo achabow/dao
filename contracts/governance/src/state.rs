@@ -1,6 +1,7 @@
 use cosmwasm_std::Addr;
 use cosmwasm_std::{StdResult, Storage, Uint128};
 use cw_storage_plus::{Item, Map};
+use governance_types::types::Vote;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -18,6 +19,28 @@ pub struct Proposal {
     pub proposer: Addr,
     pub title: String,
     pub min_votes: Uint128,
+    pub votes: Votes,
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct Votes {
+    pub yes: Uint128,
+    pub no: Uint128,
+    pub abstain: Uint128,
+}
+
+impl Votes {
+    pub fn total(&self) -> Uint128 {
+        self.yes + self.no + self.abstain
+    }
+
+    pub fn add_vote(&mut self, vote: Vote, weight: Uint128) {
+        match vote {
+            Vote::Yes => self.yes += weight,
+            Vote::No => self.no += weight,
+            Vote::Abstain => self.abstain += weight,
+        }
+    }
 }
 
 const CONFIG: Item<Config> = Item::new("\u{0}\u{6}config");

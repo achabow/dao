@@ -8,7 +8,7 @@ use cosmwasm_std::{
 };
 use governance_types::errors::ContractError;
 use governance_types::types::{
-    ExecuteMsg, InstantiateMsg, MigrateMsg, ProposalResponse, ProposeMsg, QueryMsg,
+    ExecuteMsg, InstantiateMsg, MigrateMsg, ProposalResponse, ProposeMsg, QueryMsg, Vote,
 };
 
 // Method is executed when a new contract instance is created. You can treat it as a constructor.
@@ -41,12 +41,8 @@ pub fn execute(
 ) -> Result<Response<Empty>, ContractError> {
     match msg {
         // TODO add required method types and handlers for each.
-        ExecuteMsg::Vote { .. } => execute_vote(deps, env, info),
-        ExecuteMsg::Propose(ProposeMsg {
-            title,
-            // proposer,
-            // min_votes,
-        }) => execute_propose(deps, env, info, title),
+        ExecuteMsg::Vote { vote, weight } => execute_vote(deps, env, info, vote, weight),
+        ExecuteMsg::Propose(ProposeMsg { title }) => execute_propose(deps, env, info, title),
     }
 }
 
@@ -108,5 +104,30 @@ mod test {
         assert_eq!("New proposal", value.title);
         assert_eq!("creator", value.proposer);
         assert_eq!(Uint128::from(10u128), value.min_votes);
+    }
+
+    #[test]
+    fn execute_vote() {
+        let mut deps = mock_dependencies(&coins(1000, "token"));
+
+        let info = mock_info("creator", &coins(1000, "propT"));
+        let msg = InstantiateMsg {};
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+        let msg = ExecuteMsg::Propose(ProposeMsg {
+            title: "Proposal for getting a votes".to_string(),
+        });
+        let info = mock_info("creator", &coins(1000, "propT"));
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
+        let msg = ExecuteMsg::Vote {
+            vote: Vote::Yes,
+            weight: Uint128::from(120u128),
+        };
+        let info = mock_info("creator", &coins(1000, "propT"));
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
+        let res = query(deps.as_ref(), mock_env(), QueryMsg::GetPropose {}).unwrap();
+        let value: ProposalResponse = from_binary(&res).unwrap();
+        assert_eq!(Uint128::from(10u128), value.min_votes);
+        assert_eq!(Uint128::from(120u128), value.total_votes);
     }
 }

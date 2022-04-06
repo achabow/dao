@@ -8,7 +8,7 @@ pub struct InstantiateMsg {}
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    Vote {},
+    Vote { vote: Vote, weight: Uint128 },
     Propose(ProposeMsg),
 }
 
@@ -34,6 +34,7 @@ pub struct ProposalResponse {
     pub title: String,
     pub proposer: String,
     pub min_votes: Uint128,
+    pub total_votes: Uint128,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -42,4 +43,10 @@ pub struct MigrateMsg {}
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ProposeMsg {
     pub title: String,
+}
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum Vote {
+    Yes,
+    No,
+    Abstain,
 }
