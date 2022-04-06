@@ -130,4 +130,37 @@ mod test {
         assert_eq!(Uint128::from(10u128), value.min_votes);
         assert_eq!(Uint128::from(120u128), value.total_votes);
     }
+
+    #[test]
+    fn not_allow_user_to_vote_more_than_once() {
+        let mut deps = mock_dependencies(&coins(1000, "token"));
+
+        let info = mock_info("creator", &coins(1000, "propT"));
+        let msg = InstantiateMsg {};
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+        let msg = ExecuteMsg::Propose(ProposeMsg {
+            title: "Block user before voting more than one time".to_string(),
+        });
+        let info = mock_info("creator", &coins(1000, "propT"));
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
+
+        //First voting
+        let msg = ExecuteMsg::Vote {
+            vote: Vote::Yes,
+            weight: Uint128::from(120u128),
+        };
+        let info = mock_info("voter_address", &coins(1000, "propT"));
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
+        println!("Response after first vote {:?}", res);
+
+        //Second voting
+        let msg = ExecuteMsg::Vote {
+            vote: Vote::No,
+            weight: Uint128::from(20u128),
+        };
+        let info = mock_info("voter_address", &coins(1000, "propT"));
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
+        assert!(res.is_err());
+    }
 }

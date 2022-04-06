@@ -20,6 +20,7 @@ pub struct Proposal {
     pub title: String,
     pub min_votes: Uint128,
     pub votes: Votes,
+    pub voter: Voter,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
@@ -41,6 +42,12 @@ impl Votes {
             Vote::Abstain => self.abstain += weight,
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct Voter {
+    pub address: Addr,
+    pub vote_status: bool,
 }
 
 const CONFIG: Item<Config> = Item::new("\u{0}\u{6}config");

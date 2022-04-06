@@ -1,4 +1,4 @@
-use crate::state::{read_config, read_proposal, store_proposal, Proposal, Votes};
+use crate::state::{read_config, read_proposal, store_proposal, Proposal, Voter, Votes};
 use cosmwasm_std::{DepsMut, Empty, Env, MessageInfo, Response, Uint128};
 use governance_types::errors::ContractError;
 use governance_types::types::Vote;
@@ -12,13 +12,17 @@ pub fn execute_vote(
 ) -> Result<Response, ContractError> {
     // TODO implement voting, and save state
     let mut prop = read_proposal(deps.storage)?;
+    if prop.voter.vote_status == true {
+        return Err(ContractError::Unauthorized {});
+    }
     prop.votes.add_vote(vote, weight);
-
+    prop.voter.vote_status = true;
     store_proposal(deps.storage, &prop)?;
     Ok(Response::new()
         .add_attribute("action", "execute vote")
         .add_attribute("voter", info.sender.as_str())
-        .add_attribute("votes", prop.votes.total()))
+        .add_attribute("votes", prop.votes.total())
+        .add_attribute("vote_status", prop.voter.vote_status.to_string()))
 }
 
 pub fn execute_propose(
@@ -37,6 +41,10 @@ pub fn execute_propose(
             yes: Uint128::zero(),
             no: Uint128::zero(),
             abstain: Uint128::zero(),
+        },
+        voter: Voter {
+            address: info.sender.clone(),
+            vote_status: false,
         },
     };
 
