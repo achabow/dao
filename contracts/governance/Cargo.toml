@@ -1,0 +1,43 @@
+[package]
+name = "governance-contract"
+version = "0.0.1"
+authors = ["Blocklabs.eu"]
+edition = "2018"
+description = "Contract for voting with gov token"
+license = "MIT"
+
+exclude = [
+    # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
+    "contract.wasm",
+    "hash.txt",
+]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
+
+[features]
+backtraces = ["cosmwasm-std/backtraces"]
+
+[dependencies]
+cw-storage-plus = "0.8.1"
+cosmwasm-std = { version = "0.16.0" }
+schemars = "0.8.1"
+serde = { version = "1.0.103", default-features = false, features = ["derive"] }
+governance-types = { path = "../../packages/governance-types" }
+
+[dev-dependencies]
+# we only need to enable this if we use integration tests
+cosmwasm-schema = { version = "0.16.0" }
+cosmwasm-storage = { version = "0.16.0" }
