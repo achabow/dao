@@ -13,18 +13,19 @@ pub fn execute_vote(
     let mut prop = read_proposal(deps.storage)?;
     if prop.status != Status::Open {
         return Err(ContractError::NotActiveProposal {});
-    }
-    if prop.voter.vote_status == true {
+    } else if prop.voter.already_voted == true {
+        return Err(ContractError::Unauthorized {});
+    } else if prop.voter.whitelisted == false {
         return Err(ContractError::Unauthorized {});
     }
     prop.votes.add_vote(vote, weight);
-    prop.voter.vote_status = true;
+    prop.voter.already_voted = true;
     store_proposal(deps.storage, &prop)?;
     Ok(Response::new()
         .add_attribute("action", "execute vote")
         .add_attribute("voter", info.sender.as_str())
         .add_attribute("votes", prop.votes.total())
-        .add_attribute("vote_status", prop.voter.vote_status.to_string())
+        .add_attribute("vote_status", prop.voter.already_voted.to_string())
         .add_attribute("proposal_status", String::from("OPEN")))
 }
 
@@ -45,11 +46,12 @@ pub fn execute_vote_status(
     Ok(Response::new())
 }
 
-pub fn execute_propose(
+pub fn execute_proposal(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
     title: String,
+    wh: bool,
 ) -> Result<Response<Empty>, ContractError> {
     let cfg = read_config(deps.storage)?;
 
@@ -64,8 +66,8 @@ pub fn execute_propose(
         },
         voter: Voter {
             address: info.sender.clone(),
-            vote_status: false,
-            whitelisted: false,
+            already_voted: false,
+            whitelisted: wh,
         },
         status: Status::Open,
     };

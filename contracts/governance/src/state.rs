@@ -48,7 +48,7 @@ impl Votes {
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct Voter {
     pub address: Addr,
-    pub vote_status: bool,
+    pub already_voted: bool,
     pub whitelisted: bool,
 }
 
